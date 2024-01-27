@@ -57,8 +57,23 @@ func (repo *Repository) GetDomainKeyPair(domain string) (DomainKeyPair, error) {
 	return keyPair, nil
 }
 
+// GetPage returns the ID of the page from the pages_tb table.
+func (repo *Repository) GetPage(domainID int, pageURL string) (int, error) {
+	var id int
+	err := repo.db.QueryRow("SELECT id FROM pages_tb WHERE domain_id = ? AND page_url = ?", domainID, pageURL).Scan(&id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		} else {
+			return 0, err
+		}
+	}
+
+	return id, nil
+}
+
 // SavePage saves a new page to the pages_tb table.
-func (repo *Repository) SavePage(domainID int, pageURL string) (int64, error) {
+func (repo *Repository) CreatePage(domainID int, pageURL string) (int64, error) {
 	result, err := repo.db.Exec("INSERT INTO pages_tb (domain_id, page_url) VALUES (?, ?)", domainID, pageURL)
 	if err != nil {
 		return 0, err
@@ -88,9 +103,9 @@ func (repo *Repository) SaveIPAddress(ipAddress string) (int64, error) {
 }
 
 // SaveUTM saves a new UTM req to the utm_tb table.
-func (repo *Repository) SaveUTM(pageID, ipAddressID int, utmSource, utmMedium, utmCampaign string) (int64, error) {
-	result, err := repo.db.Exec("INSERT INTO utm_tb (page_id, ip_address_id, utm_source, utm_medium, utm_campaign) VALUES (?, ?, ?, ?, ?)",
-		pageID, ipAddressID, utmSource, utmMedium, utmCampaign)
+func (repo *Repository) SaveUTM(pageID int, utmSource, utmMedium, utmCampaign string) (int64, error) {
+	result, err := repo.db.Exec("INSERT INTO utm_tb (page_id, utm_source, utm_medium, utm_campaign) VALUES (?, ?, ?, ?)",
+		pageID, utmSource, utmMedium, utmCampaign)
 	if err != nil {
 		return 0, err
 	}

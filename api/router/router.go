@@ -18,7 +18,7 @@ func NewRouter(trackHandlers *track.Handlers, middleware *middleware.Middleware)
 	router := http.NewServeMux()
 
 	routes := Routes{
-		// {Path: "/api/v1/track/utm", Handler: logRequest(track.TrackUTMHandler)},
+		{Path: "/api/v1/track/utm", Handler: middleware.HandleMiddleware(trackHandlers.TrackUTMHandler, middleware.DomainValidation, middleware.LogRequest)},
 		{Path: "/api/v1/track/click", Handler: middleware.HandleMiddleware(trackHandlers.TrackClickHandler, middleware.DomainValidation, middleware.LogRequest)},
 	}
 
@@ -34,7 +34,12 @@ func handleCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Site-Key, Origin")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		next.ServeHTTP(w, r)
 	}

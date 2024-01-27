@@ -42,21 +42,22 @@ func (m *Middleware) DomainValidation(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 		if origin == "" {
-			http.Error(w, "Missing Origin header", http.StatusBadRequest)
+			http.Error(w, "Missing Origin header", http.StatusUnauthorized)
 			return
 		}
+
 		l.Info().Msgf("Validating origin: %s", origin)
 
 		siteKey := r.Header.Get("X-Site-Key")
 		if siteKey == "" {
-			http.Error(w, "Missing X-Site-Key header", http.StatusBadRequest)
+			http.Error(w, "Missing X-Site-Key header", http.StatusUnauthorized)
 			return
 		}
 
 		domain := getDomainFromOrigin(origin)
 
 		if !m.service.ValidateDomainKeyPair(domain, siteKey) {
-			http.Error(w, "Invalid domain key pair", http.StatusBadRequest)
+			http.Error(w, "Invalid domain key pair", http.StatusUnauthorized)
 			return
 		}
 		next.ServeHTTP(w, r)

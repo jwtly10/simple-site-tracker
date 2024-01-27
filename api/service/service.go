@@ -26,6 +26,8 @@ func (s *Service) ValidateDomainKeyPair(domain string, siteKey string) bool {
 		return false
 	}
 
+	l.Info().Msgf("Validating domain key pair: %s %s", keyPair.Domain, keyPair.SiteKey)
+
 	if keyPair.Domain == "" {
 		l.Error().Msg("Domain not found")
 		return false
