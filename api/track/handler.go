@@ -21,6 +21,7 @@ type TrackUTMRequest struct {
 	UTMSource   string `json:"utm_source"`
 	UTMMedium   string `json:"utm_medium"`
 	UTMCampaign string `json:"utm_campaign"`
+	Track       string `json:"track"`
 	PageURL     string `json:"page_url"`
 }
 
@@ -88,22 +89,20 @@ func (h *Handlers) TrackUTMHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Save UTM
 	l.Info().Msgf("Saving UTM for page %s", page)
-	utmId, err := h.repo.SaveUTM(pageId, utmEvent.UTMSource, utmEvent.UTMMedium, utmEvent.UTMCampaign)
+	utmId, err := h.repo.SaveUTM(pageId, utmEvent.UTMSource, utmEvent.UTMMedium, utmEvent.UTMCampaign, utmEvent.Track)
 	if err != nil {
 		l.Error().Err(err).Msg("Error saving UTM")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	l.Info().Msgf("UTM saved with ID %d", utmId)
-
+	l.Info().Msgf("UTM tracked with ID %d", utmId)
 	w.WriteHeader(http.StatusOK)
 }
 
 type TrackClickRequest struct {
-	Element   string `json:"element"`
-	PageUrl   string `json:"page_url"`
-	Timestamp string `json:"timestamp"`
+	Element map[string]interface{} `json:"element"`
+	URL     string                 `json:"url"`
 }
 
 // TrackClickHandler handles tracking clicks.
@@ -127,14 +126,54 @@ func (h *Handlers) TrackClickHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if clickEvent.Element == "" || clickEvent.Timestamp == "" {
-		l.Error().Msg("Invalid request body")
-		w.WriteHeader(http.StatusBadRequest)
+	// Get the domain id
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		l.Error().Msg("Missing Origin header")
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	l.Info().Msgf("Click tracked")
+	domain := getDomainFromOrigin(origin)
 
+	domainId, err := h.repo.GetDomain(domain)
+	if domainId == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+
+	// Get the page id
+	page := getPageFromURL(clickEvent.URL)
+	pageId, err := h.repo.GetPage(domainId, page)
+	if err != nil {
+		l.Error().Err(err).Msg("Error getting page")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Create page if it doesn't exist
+	var pageId64 int64
+	if pageId == 0 {
+		l.Info().Msgf("Page %s does not exist. Creating page", page)
+		pageId64, err = h.repo.CreatePage(domainId, page)
+		if err != nil {
+			l.Error().Err(err).Msg("Error creating page")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		pageId = int(pageId64)
+	}
+	// Save the click
+	l.Info().Msgf("Saving click for page %s", page)
+	clickId, err := h.repo.SaveClick(pageId, clickEvent.Element)
+	if err != nil {
+		l.Error().Err(err).Msg("Error saving click")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	l.Info().Msgf("Click tracked with ID %d", clickId)
+	w.WriteHeader(http.StatusOK)
 }
 
 // getDomainFromOrigin returns the domain from the origin.

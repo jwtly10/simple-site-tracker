@@ -2,6 +2,7 @@ package track
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 )
 
@@ -103,9 +104,9 @@ func (repo *Repository) SaveIPAddress(ipAddress string) (int64, error) {
 }
 
 // SaveUTM saves a new UTM req to the utm_tb table.
-func (repo *Repository) SaveUTM(pageID int, utmSource, utmMedium, utmCampaign string) (int64, error) {
-	result, err := repo.db.Exec("INSERT INTO utm_tb (page_id, utm_source, utm_medium, utm_campaign) VALUES (?, ?, ?, ?)",
-		pageID, utmSource, utmMedium, utmCampaign)
+func (repo *Repository) SaveUTM(pageID int, utmSource, utmMedium, utmCampaign, track string) (int64, error) {
+	result, err := repo.db.Exec("INSERT INTO utm_tb (page_id, utm_source, utm_medium, utm_campaign, track) VALUES (?, ?, ?, ?, ?)",
+		pageID, utmSource, utmMedium, utmCampaign, track)
 	if err != nil {
 		return 0, err
 	}
@@ -118,10 +119,17 @@ func (repo *Repository) SaveUTM(pageID int, utmSource, utmMedium, utmCampaign st
 	return id, nil
 }
 
-// SaveClick saves a new click to the clicks_tb table.
-func (repo *Repository) SaveClick(pageID, ipAddressID int, element, clickedURL string) (int64, error) {
-	result, err := repo.db.Exec("INSERT INTO clicks_tb (page_id, ip_address_id, element, clicked_url) VALUES (?, ?, ?, ?)",
-		pageID, ipAddressID, element, clickedURL)
+// SaveClick saves a new click data to the clicks_tb table.
+func (repo *Repository) SaveClick(pageID int, element map[string]interface{}) (int64, error) {
+	// Convert the map to a JSON string
+	elementJSON, err := json.Marshal(element)
+	if err != nil {
+		return 0, err
+	}
+
+	// Use the JSON_UNQUOTE function to ensure the stored JSON data is valid
+	stmt := "INSERT INTO clicks_tb (page_id, element) VALUES (?, JSON_UNQUOTE(?))"
+	result, err := repo.db.Exec(stmt, pageID, elementJSON)
 	if err != nil {
 		return 0, err
 	}
