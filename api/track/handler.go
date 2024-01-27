@@ -34,7 +34,6 @@ type TrackUTMRequest struct {
 // ServeJSHandler serves the JS file for the specific domain
 func (h *Handlers) ServeJSHandler(w http.ResponseWriter, r *http.Request) {
 	l := logger.Get()
-	l.Info().Msg("Serving JS")
 
 	clientKey := r.URL.Path[len("/serve/js/"):]
 	if clientKey == "" {
