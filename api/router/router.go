@@ -23,7 +23,8 @@ func NewRouter(trackHandlers *track.Handlers, middleware *middleware.Middleware)
 		{Path: "/serve/js/", Handler: trackHandlers.ServeTrackJSHandler},
 	}
 
-	allowedOrigins := []string{"http://localhost:5173"}
+	// TODO: Make this configurable, without code change
+	allowedOrigins := []string{"http://localhost:5173", "https://jwtly10.dev"}
 
 	for _, route := range routes {
 		corsHandler := handleCORS(allowedOrigins, route.Handler)
