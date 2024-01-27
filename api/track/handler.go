@@ -31,8 +31,8 @@ type TrackUTMRequest struct {
 	PageURL     string `json:"page_url"`
 }
 
-// ServeJSHandler serves the JS file for the specific domain
-func (h *Handlers) ServeJSHandler(w http.ResponseWriter, r *http.Request) {
+// ServeTrackJSHandler serves the JS file for the specific domain
+func (h *Handlers) ServeTrackJSHandler(w http.ResponseWriter, r *http.Request) {
 	l := logger.Get()
 
 	clientKey := r.URL.Path[len("/serve/js/"):]
@@ -56,7 +56,7 @@ func (h *Handlers) ServeJSHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	script := GenerateClientJS(clientKey)
+	script := generateClientJS(clientKey)
 	if script == "" {
 		l.Error().Msg("Error generating client JS")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -66,32 +66,6 @@ func (h *Handlers) ServeJSHandler(w http.ResponseWriter, r *http.Request) {
 	l.Info().Msgf("Serving JS for client key %s", clientKey)
 	w.Header().Set("Content-Type", "application/javascript")
 	w.Write([]byte(script))
-}
-
-// GenerateClientJS generates the client JS script.
-// It returns the client JS script.
-func GenerateClientJS(clientKey string) string {
-	l := logger.Get()
-	templatePath := filepath.Join("templates", "clientScript.js")
-	fileContent, err := os.ReadFile(templatePath)
-	if err != nil {
-		l.Error().Err(err).Msg("Error reading file")
-		return ""
-	}
-
-	serverURL := os.Getenv("SERVER_URL")
-	formattedContent := fmt.Sprintf(string(fileContent), clientKey, serverURL)
-
-	// Minify the JS
-	m := minify.New()
-	m.AddFunc("text/javascript", js.Minify)
-
-	minified, err := m.String("text/javascript", formattedContent)
-	if err != nil {
-		return ""
-	}
-
-	return minified
 }
 
 // TrackUTMHandler handles tracking UTMs.
@@ -272,4 +246,30 @@ func getPageFromURL(pageURL string) string {
 	}
 
 	return path
+}
+
+// GenerateClientJS generates the client JS script.
+// It returns the client JS script.
+func generateClientJS(clientKey string) string {
+	l := logger.Get()
+	templatePath := filepath.Join("templates", "clientScript.js")
+	fileContent, err := os.ReadFile(templatePath)
+	if err != nil {
+		l.Error().Err(err).Msg("Error reading file")
+		return ""
+	}
+
+	serverURL := os.Getenv("SERVER_URL")
+	formattedContent := fmt.Sprintf(string(fileContent), clientKey, serverURL)
+
+	// Minify the JS
+	m := minify.New()
+	m.AddFunc("text/javascript", js.Minify)
+
+	minified, err := m.String("text/javascript", formattedContent)
+	if err != nil {
+		return ""
+	}
+
+	return minified
 }

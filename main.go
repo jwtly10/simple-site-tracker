@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/jwtly10/simple-site-tracker/api/middleware"
 	. "github.com/jwtly10/simple-site-tracker/api/router"
-	"github.com/jwtly10/simple-site-tracker/api/router/middleware"
 	"github.com/jwtly10/simple-site-tracker/api/service"
 	"github.com/jwtly10/simple-site-tracker/api/track"
 	"github.com/jwtly10/simple-site-tracker/config"
