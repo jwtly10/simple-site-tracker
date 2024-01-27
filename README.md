@@ -26,12 +26,25 @@ Self hosting this tracker also allows me to notify myself on certain events. (ie
 
 ## Usage
 
-1. Include the following script in the `<head>` section of your HTML file:
+1. Include the following script at the bottom of the `<head>` section of your HTML file:
 
    ```html
    <script src="https://appurl/server/js/{clientKey}"></script>
    ```
 
 
+## Build
+The app is dockerised so to run locally:
 
+### Requirements
+- Running MySQL8 DB (v8 is required due to JSON type)
+- Schema as defined in schema.sql
 
+```bash
+# Build the docker app
+docker build -t simple-site-tracker:latest .
+
+# Run the docker app with env vars
+docker run -p 8080:8080 -e DB_URL=<DB_URL> -e DB_USERNAME=<DB_USERNAME> -e DB_PASSWORD=<DB_PASSWORD> -e DB_PORT=<DB_PORT> -e SERVER_URL=<SERVER_URL> simple-site-tracker:latest
+```
+Note: The run command requires env vars defined in .env_empty, which can be passed in .env or during docker run 
