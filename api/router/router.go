@@ -14,12 +14,12 @@ type Route struct {
 
 type Routes []Route
 
-func NewRouter() *http.ServeMux {
+func NewRouter(trackHandlers *track.Handlers) *http.ServeMux {
 	router := http.NewServeMux()
 
 	routes := Routes{
 		{Path: "/api/v1/track/utm", Handler: logRequest(track.TrackUTMHandler)},
-		{Path: "/api/v1/track/click", Handler: logRequest(track.TrackClickHandler)},
+		{Path: "/api/v1/track/click", Handler: logRequest(trackHandlers.TrackClickHandler)},
 	}
 
 	for _, route := range routes {

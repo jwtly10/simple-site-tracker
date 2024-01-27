@@ -3,8 +3,9 @@ module github.com/jwtly10/simple-site-tracker
 go 1.21.6
 
 require (
+	github.com/go-sql-driver/mysql v1.7.1
+	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.31.0
-	github.com/sirupsen/logrus v1.9.3
 )
 
 require (
