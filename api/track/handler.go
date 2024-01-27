@@ -2,9 +2,15 @@ package track
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
+
+	"github.com/tdewolff/minify"
+	"github.com/tdewolff/minify/js"
 
 	"github.com/jwtly10/simple-site-tracker/utils/logger"
 )
@@ -23,6 +29,70 @@ type TrackUTMRequest struct {
 	UTMCampaign string `json:"utm_campaign"`
 	Track       string `json:"track"`
 	PageURL     string `json:"page_url"`
+}
+
+// ServeJSHandler serves the JS file for the specific domain
+func (h *Handlers) ServeJSHandler(w http.ResponseWriter, r *http.Request) {
+	l := logger.Get()
+	l.Info().Msg("Serving JS")
+
+	clientKey := r.URL.Path[len("/serve/js/"):]
+	if clientKey == "" {
+		l.Error().Msg("Missing client key")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Check valid clientKey
+	domainId, err := h.repo.GetDomainIDFromKey(clientKey)
+	if err != nil {
+		l.Error().Err(err).Msg("Error getting domain ID from key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if domainId == 0 {
+		l.Error().Msg("Invalid client key")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	script := GenerateClientJS(clientKey)
+	if script == "" {
+		l.Error().Msg("Error generating client JS")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	l.Info().Msgf("Serving JS for client key %s", clientKey)
+	w.Header().Set("Content-Type", "application/javascript")
+	w.Write([]byte(script))
+}
+
+// GenerateClientJS generates the client JS script.
+// It returns the client JS script.
+func GenerateClientJS(clientKey string) string {
+	l := logger.Get()
+	templatePath := filepath.Join("templates", "clientScript.js")
+	fileContent, err := os.ReadFile(templatePath)
+	if err != nil {
+		l.Error().Err(err).Msg("Error reading file")
+		return ""
+	}
+
+	serverURL := os.Getenv("SERVER_URL")
+	formattedContent := fmt.Sprintf(string(fileContent), clientKey, serverURL)
+
+	// Minify the JS
+	m := minify.New()
+	m.AddFunc("text/javascript", js.Minify)
+
+	minified, err := m.String("text/javascript", formattedContent)
+	if err != nil {
+		return ""
+	}
+
+	return minified
 }
 
 // TrackUTMHandler handles tracking UTMs.

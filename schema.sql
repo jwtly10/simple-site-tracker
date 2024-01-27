@@ -39,7 +39,6 @@ CREATE TABLE IF NOT EXISTS clicks_tb (
     id INT AUTO_INCREMENT PRIMARY KEY,
     element JSON,
     page_id INT,
-    clicked_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (page_id) REFERENCES pages_tb(id)
 );

@@ -40,6 +40,21 @@ func (repo *Repository) GetDomain(domain string) (int, error) {
 	return id, nil
 }
 
+// GetDomainIDFromKey returns the ID of the domain from the domains_tb table given the key.
+func (repo *Repository) GetDomainIDFromKey(key string) (int, error) {
+	var id int
+	err := repo.db.QueryRow("SELECT id FROM domains_tb WHERE siteKey = ?", key).Scan(&id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		} else {
+			return 0, err
+		}
+	}
+
+	return id, nil
+}
+
 type DomainKeyPair struct {
 	Domain  string `db:"domain"`
 	SiteKey string `db:"siteKey"`
