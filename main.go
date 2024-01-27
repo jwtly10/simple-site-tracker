@@ -8,6 +8,8 @@ import (
 	"time"
 
 	. "github.com/jwtly10/simple-site-tracker/api/router"
+	"github.com/jwtly10/simple-site-tracker/api/router/middleware"
+	"github.com/jwtly10/simple-site-tracker/api/service"
 	"github.com/jwtly10/simple-site-tracker/api/track"
 	"github.com/jwtly10/simple-site-tracker/config"
 	"github.com/jwtly10/simple-site-tracker/utils/logger"
@@ -29,9 +31,12 @@ func main() {
 
 	// Load repository and handlers
 	repo := track.NewRepository(db)
-	trackHandlers := track.NewHandlers(repo)
+	th := track.NewHandlers(repo)
 
-	router := NewRouter(trackHandlers)
+	svc := service.NewService(repo)
+	mw := middleware.NewMiddleware(svc)
+
+	router := NewRouter(th, mw)
 
 	server := &http.Server{
 		Addr:    ":8080",

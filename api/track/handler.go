@@ -47,7 +47,6 @@ func TrackUTMHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type TrackClickRequest struct {
-	Domain    string `json:"domain"`
 	Element   string `json:"element"`
 	PageUrl   string `json:"page_url"`
 	Timestamp string `json:"timestamp"`
@@ -80,24 +79,6 @@ func (h *Handlers) TrackClickHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	domainID, err := h.repo.GetDomain(clickEvent.Domain)
-	if err != nil {
-		l.Error().Msgf("Error getting domain: %s", err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	l.Info().Msgf("domain_id: %d", domainID)
-	l.Info().Msgf("domain: %s", clickEvent.Domain)
-	l.Info().Msgf("element: %s", clickEvent.Element)
-	l.Info().Msgf("page_url: %s", clickEvent.PageUrl)
-	l.Info().Msgf("timestamp: %s", clickEvent.Timestamp)
-}
-
-func validateDomainAgainstKey(r *http.Request) (bool, error) {
-	l := logger.Get()
-
-	domain := r.URL.Query().Get("domain")
-	key := r.URL.Query().Get("key")
+	l.Info().Msgf("Click tracked")
 
 }

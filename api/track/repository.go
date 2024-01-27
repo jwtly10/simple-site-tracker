@@ -1,6 +1,9 @@
 package track
 
-import "database/sql"
+import (
+	"database/sql"
+	"errors"
+)
 
 type Repository struct {
 	db *sql.DB
@@ -34,6 +37,24 @@ func (repo *Repository) GetDomain(domain string) (int, error) {
 	}
 
 	return id, nil
+}
+
+type DomainKeyPair struct {
+	Domain  string `db:"domain"`
+	SiteKey string `db:"siteKey"`
+}
+
+// GetDomainKeyPair returns the key of the domain from the domains_tb table.
+func (repo *Repository) GetDomainKeyPair(domain string) (DomainKeyPair, error) {
+	var keyPair DomainKeyPair
+	err := repo.db.QueryRow("SELECT domain, siteKey FROM domains_tb WHERE domain = ?", domain).Scan(&keyPair.Domain, &keyPair.SiteKey)
+	if errors.Is(err, sql.ErrNoRows) {
+		return DomainKeyPair{}, sql.ErrNoRows
+	} else if err != nil {
+		return DomainKeyPair{}, err
+	}
+
+	return keyPair, nil
 }
 
 // SavePage saves a new page to the pages_tb table.

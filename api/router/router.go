@@ -3,8 +3,8 @@ package router
 import (
 	"net/http"
 
+	"github.com/jwtly10/simple-site-tracker/api/router/middleware"
 	"github.com/jwtly10/simple-site-tracker/api/track"
-	"github.com/jwtly10/simple-site-tracker/utils/logger"
 )
 
 type Route struct {
@@ -14,25 +14,28 @@ type Route struct {
 
 type Routes []Route
 
-func NewRouter(trackHandlers *track.Handlers) *http.ServeMux {
+func NewRouter(trackHandlers *track.Handlers, middleware *middleware.Middleware) *http.ServeMux {
 	router := http.NewServeMux()
 
 	routes := Routes{
-		{Path: "/api/v1/track/utm", Handler: logRequest(track.TrackUTMHandler)},
-		{Path: "/api/v1/track/click", Handler: logRequest(trackHandlers.TrackClickHandler)},
+		// {Path: "/api/v1/track/utm", Handler: logRequest(track.TrackUTMHandler)},
+		{Path: "/api/v1/track/click", Handler: middleware.HandleMiddleware(trackHandlers.TrackClickHandler, middleware.DomainValidation, middleware.LogRequest)},
 	}
 
 	for _, route := range routes {
-		router.HandleFunc(route.Path, route.Handler)
+		corsHandler := handleCORS(route.Handler)
+		router.HandleFunc(route.Path, corsHandler)
 	}
 
 	return router
 }
 
-func logRequest(next http.HandlerFunc) http.HandlerFunc {
-	l := logger.Get()
+func handleCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		l.Info().Msgf("Received request: %s %s", r.Method, r.URL.Path)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 		next.ServeHTTP(w, r)
 	}
 }
