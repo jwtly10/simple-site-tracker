@@ -2,6 +2,8 @@ package router
 
 import (
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/jwtly10/simple-site-tracker/api/middleware"
 	"github.com/jwtly10/simple-site-tracker/api/track"
@@ -24,8 +26,8 @@ func NewRouter(trackHandlers *track.Handlers, middleware *middleware.Middleware)
 		{Path: "/serve/js/", Handler: trackHandlers.ServeTrackJSHandler},
 	}
 
-	// TODO: Make this configurable, without code change
-	allowedOrigins := []string{"http://localhost:5173", "https://jwtly10.dev"}
+	origins := os.Getenv("ALLOWED_ORIGINS")
+	allowedOrigins := strings.Split(origins, ",")
 
 	for _, route := range routes {
 		corsHandler := handleCORS(allowedOrigins, route.Handler)
