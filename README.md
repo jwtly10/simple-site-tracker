@@ -24,6 +24,11 @@ Self hosting this tracker also allows me to notify myself on certain events. (ie
 
 - **Validation:** Validation included to ensure that only your domain can be tracked against, which helps against malicious actors.
 
+- **Local Data:** Hosting the DB means we have direct access to the data and can create custom dashboard using bespoke views such as :
+![image](https://github.com/jwtly10/simple-site-tracker/assets/39057715/f60fdb5e-da60-406b-8989-714cff96f0ce)
+
+
+
 ## Usage
 
 1. Include the following script at the bottom of the `<head>` section of your HTML file:
