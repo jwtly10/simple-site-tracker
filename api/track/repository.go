@@ -6,6 +6,19 @@ import (
 	"errors"
 )
 
+type RepositoryInterface interface {
+	SavePageView(domainId, pageId int) (int64, error)
+	SaveDomain(domain, key string) (int64, error)
+	GetDomain(domain string) (int, error)
+	GetDomainIDFromKey(key string) (int, error)
+	GetDomainKeyPair(domain string) (DomainKeyPair, error)
+	GetPage(domainID int, pageURL string) (int, error)
+	CreatePage(domainID int, pageURL string) (int64, error)
+	SaveIPAddress(ipAddress string) (int64, error)
+	SaveUTM(pageID int, utmSource, utmMedium, utmCampaign, track string) (int64, error)
+	SaveClick(pageID int, element map[string]interface{}) (int64, error)
+}
+
 type Repository struct {
 	db *sql.DB
 }
