@@ -14,6 +14,21 @@ func NewRepository(db *sql.DB) *Repository {
 	return &Repository{db: db}
 }
 
+// SavePageView saves a new page view to the page_views_tb table.
+func (repo *Repository) SavePageView(domainId, pageId int) (int64, error) {
+	result, err := repo.db.Exec("INSERT INTO page_views_tb (domain_id, page_id) VALUES (?, ?)", domainId, pageId)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
 // SaveDomain saves a new domain to the domains_tb table.
 func (repo *Repository) SaveDomain(domain, key string) (int64, error) {
 	result, err := repo.db.Exec("INSERT INTO domains_tb (domain, key) VALUES (?, ?)", domain, key)

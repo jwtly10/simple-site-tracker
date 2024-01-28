@@ -143,6 +143,76 @@ func (h *Handlers) TrackUTMHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+type TrackPageViewRequest struct {
+	URL string `json:"url"`
+}
+
+func (h *Handlers) TrackPageViewHandler(w http.ResponseWriter, r *http.Request) {
+	l := logger.Get()
+
+	if r.Method != http.MethodPost {
+		l.Warn().Msgf("Invalid method: %s", r.Method)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var pageViewEvent TrackPageViewRequest
+	err := json.NewDecoder(r.Body).Decode(&pageViewEvent)
+	if err != nil {
+		l.Error().Msgf("Error decoding request: %s", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	l.Info().Msgf("Tracking page view for request %s", pageViewEvent)
+
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		l.Error().Msg("Missing Origin header")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	domain := getDomainFromOrigin(origin)
+	domainId, err := h.repo.GetDomain(domain)
+	if domainId == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+
+	page := getPageFromURL(pageViewEvent.URL)
+	pageId, err := h.repo.GetPage(domainId, page)
+	if err != nil {
+		l.Error().Err(err).Msg("Error getting page")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var pageId64 int64
+	if pageId == 0 {
+		l.Info().Msgf("Page %s does not exist. Creating page", page)
+		pageId64, err = h.repo.CreatePage(domainId, page)
+		if err != nil {
+			l.Error().Err(err).Msg("Error creating page")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		pageId = int(pageId64)
+	}
+
+	// Save page view
+	l.Info().Msgf("Saving page view for page %s", page)
+	pageViewId, err := h.repo.SavePageView(domainId, pageId)
+	if err != nil {
+		l.Error().Err(err).Msg("Error saving page view")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	l.Info().Msgf("Page view tracked with ID %d", pageViewId)
+	w.WriteHeader(http.StatusOK)
+}
+
 type TrackClickRequest struct {
 	Element map[string]interface{} `json:"element"`
 	URL     string                 `json:"url"`

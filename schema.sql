@@ -18,6 +18,15 @@ CREATE TABLE IF NOT EXISTS pages_tb (
     FOREIGN KEY (domain_id) REFERENCES domains_tb(id)
 );
 
+CREATE TABLE IF NOT EXISTS page_views_tb (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    domain_id INT NOT NULL,
+    page_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (domain_id) REFERENCES domains_tb(id),
+    FOREIGN KEY (page_id) REFERENCES pages_tb(id)
+);
+
 CREATE TABLE IF NOT EXISTS ip_addresses_tb (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ip_address VARCHAR(255) NOT NULL UNIQUE,
