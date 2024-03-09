@@ -1,7 +1,17 @@
 const clientKey = '%s'
 const serverURL = '%s'
 
-document.addEventListener('DOMContentLoaded', function () {
+if (document.readyState !== 'loading') {
+    console.log('document is already ready')
+    onReady()
+} else {
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('document was not ready')
+        onReady()
+    });
+}
+
+function onReady() {
   var utmData = getUTMParameters()
 
   if (utmData) {
@@ -12,7 +22,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // Send page view data to the server
   var pageURL = window.location.href
   sendPageViewData(pageURL)
-})
+
+}
 
 // Send page view data to the server navigation change
 window.addEventListener('hashchange', function () {
