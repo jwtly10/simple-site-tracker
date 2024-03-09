@@ -7,6 +7,7 @@ import (
 
 	"github.com/jwtly10/simple-site-tracker/api/middleware"
 	"github.com/jwtly10/simple-site-tracker/api/track"
+	"golang.org/x/time/rate"
 )
 
 type Route struct {
@@ -19,11 +20,30 @@ type Routes []Route
 func NewRouter(trackHandlers *track.Handlers, middleware *middleware.Middleware) *http.ServeMux {
 	router := http.NewServeMux()
 
+	//  Max 50 requests per hour
+	allowedReqPerHour:= 50
+	secondsPerHour := 3600
+	ratePerSecond := allowedReqPerHour / secondsPerHour
+	burst := 50
+
+	limiter := rate.NewLimiter(rate.Limit(ratePerSecond), burst)
+
 	routes := Routes{
-		{Path: "/api/v1/track/utm", Handler: middleware.HandleMiddleware(trackHandlers.TrackUTMHandler, middleware.DomainValidation, middleware.LogRequest)},
-		{Path: "/api/v1/track/click", Handler: middleware.HandleMiddleware(trackHandlers.TrackClickHandler, middleware.DomainValidation, middleware.LogRequest)},
-		{Path: "/api/v1/track/pageview", Handler: middleware.HandleMiddleware(trackHandlers.TrackPageViewHandler, middleware.DomainValidation, middleware.LogRequest)},
-		{Path: "/serve/js/", Handler: middleware.HandleMiddleware(trackHandlers.ServeTrackJSHandler, middleware.CheckForIgnoreHeader)},
+		{Path: "/api/v1/track/utm", Handler: middleware.HandleMiddleware(
+			middleware.RateLimit(trackHandlers.TrackUTMHandler, limiter),
+			middleware.DomainValidation,
+			middleware.LogRequest)},
+		{Path: "/api/v1/track/click", Handler: middleware.HandleMiddleware(
+			middleware.RateLimit(trackHandlers.TrackClickHandler, limiter),
+			middleware.DomainValidation,
+			middleware.LogRequest)},
+		{Path: "/api/v1/track/pageview", Handler: middleware.HandleMiddleware(
+			middleware.RateLimit(trackHandlers.TrackPageViewHandler, limiter),
+			middleware.DomainValidation,
+			middleware.LogRequest)},
+		{Path: "/serve/js/", Handler: middleware.HandleMiddleware(
+			middleware.RateLimit(trackHandlers.ServeTrackJSHandler, limiter),
+			middleware.CheckForIgnoreHeader)},
 	}
 
 	origins := os.Getenv("ALLOWED_ORIGINS")

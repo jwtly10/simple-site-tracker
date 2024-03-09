@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"golang.org/x/time/rate"
+
 	"github.com/jwtly10/simple-site-tracker/api/service"
 	"github.com/jwtly10/simple-site-tracker/utils/logger"
 )
@@ -31,6 +33,20 @@ func (m *Middleware) LogRequest(next http.HandlerFunc) http.HandlerFunc {
 	l := logger.Get()
 	return func(w http.ResponseWriter, r *http.Request) {
 		l.Info().Msgf("Received request: %s %s", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	}
+}
+
+// RateLimit limits the number of requests per second.
+// Limits defined in router config
+func (m *Middleware) RateLimit(next http.HandlerFunc, limiter *rate.Limiter) http.HandlerFunc {
+	l := logger.Get()
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !limiter.Allow() {
+			l.Error().Msg("Rate limit exceeded")
+			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
+			return
+		}
 		next.ServeHTTP(w, r)
 	}
 }

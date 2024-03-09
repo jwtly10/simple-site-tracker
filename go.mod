@@ -8,6 +8,7 @@ require (
 	github.com/rs/zerolog v1.31.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tdewolff/minify v2.3.6+incompatible
+	golang.org/x/time v0.5.0
 )
 
 require (
