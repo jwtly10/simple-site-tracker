@@ -23,7 +23,7 @@ func NewRouter(trackHandlers *track.Handlers, middleware *middleware.Middleware)
 		{Path: "/api/v1/track/utm", Handler: middleware.HandleMiddleware(trackHandlers.TrackUTMHandler, middleware.DomainValidation, middleware.LogRequest)},
 		{Path: "/api/v1/track/click", Handler: middleware.HandleMiddleware(trackHandlers.TrackClickHandler, middleware.DomainValidation, middleware.LogRequest)},
 		{Path: "/api/v1/track/pageview", Handler: middleware.HandleMiddleware(trackHandlers.TrackPageViewHandler, middleware.DomainValidation, middleware.LogRequest)},
-		{Path: "/serve/js/", Handler: trackHandlers.ServeTrackJSHandler},
+		{Path: "/serve/js/", Handler: middleware.HandleMiddleware(trackHandlers.ServeTrackJSHandler, middleware.CheckForIgnoreHeader)},
 	}
 
 	origins := os.Getenv("ALLOWED_ORIGINS")

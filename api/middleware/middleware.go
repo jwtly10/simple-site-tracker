@@ -35,6 +35,22 @@ func (m *Middleware) LogRequest(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// Checks for the ignore header.
+// Ignores the request if the X-Ignore-Tracking header is set to true.
+// This is mainly used for testing live sites, to add the header you can install an extension like
+// https://modheader.com/ on your browser.
+func (m *Middleware) CheckForIgnoreHeader(next http.HandlerFunc) http.HandlerFunc {
+	l := logger.Get()
+	return func(w http.ResponseWriter, r *http.Request) {
+		ignore := r.Header.Get("X-Ignore-Tracking")
+		if ignore == "true" {
+			l.Info().Msgf("Ignoring request from host: %s", r.Host)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+}
+
 // DomainValidation validates the domain and key pair.
 // It returns a 400 status code if the domain and key pair is invalid.
 func (m *Middleware) DomainValidation(next http.HandlerFunc) http.HandlerFunc {
